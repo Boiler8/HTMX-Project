@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="index.css">
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@1.6.0/dist/htmx.min.js"></script>
+</head>
+<body>
+
+<div class="topnav">
+  <h1>Vinyl Style</h1>
+</div>
+
+<div class="sidenav">
+  <h2>Song list</h2>
+  <div id="songs-list"></div>
+  <div class="stoic-quote">
+    <p id="stoic-quote">Click the button to fetch a stoic quote.</p>
+    <p id="stoic-author"></p>
+    <button hx-get="https://stoic.tekloon.net/stoic-quote" hx-trigger="click" hx-target="#stoic-quote">
+      Fetch Stoic Quote
+    </button>
+  </div>
+</div>
+
+<body>
+
+  <div class="media-player">
+    <h1 id="current-song-title">No Song Selected</h1>
+    <h1 id="current-song-album"></h1>
+    <h1 id="current-song-artist"></h1>
+
+    <div class="audioplayer">
+      <audio controls id="audio-player"></audio>
+    </div>
+
+  </div>
+
+  <div class="album-cover">
+    <div id="current-song-album-cover"></div>
+  </div>
+
+</body>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAStzEVEDu7iLxnPFgEd--jepI1ppSAwoM",
+    authDomain: "htmxvinylstyle.firebaseapp.com",
+    projectId: "htmxvinylstyle",
+    storageBucket: "htmxvinylstyle.appspot.com",
+    messagingSenderId: "1074781853591",
+    appId: "1:1074781853591:web:02bc940c8d8ebef909d6d2",
+    measurementId: "G-E3KX6KY7BL"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  const db = firebase.firestore();
+
+  const songTitlesContainer = document.getElementById('songs-list');
+  const currentSongTitleElement = document.getElementById('current-song-title');
+  const currentSongArtistElement = document.getElementById('current-song-artist');
+  const currentSongAlbumElement = document.getElementById('current-song-album');
+  const currentSongAlbumCoverContainer = document.getElementById('current-song-album-cover');
+  const audioPlayer = document.getElementById('audio-player');
+  db.collection("songs").get().then((querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      const songData = doc.data();
+      const songButtonElement = document.createElement('button');
+      songButtonElement.textContent = `${songData.title} - ${songData.artist}`;
+      songButtonElement.addEventListener('click', () => {
+        currentSongTitleElement.textContent = `Now Playing: ${songData.title}`;
+        currentSongArtistElement.textContent = `By: ${songData.artist}`;
+        currentSongAlbumElement.textContent = `Album: ${songData.album}`;
+        
+        currentSongAlbumCoverContainer.innerHTML = '';
+        const albumCoverImg = document.createElement('img');
+        albumCoverImg.src = songData.cover_path;
+        currentSongAlbumCoverContainer.appendChild(albumCoverImg);
+
+        audioPlayer.src = songData.audio_path;
+        audioPlayer.play();
+      });
+      songTitlesContainer.appendChild(songButtonElement);
+    });
+  });
+
+  const fetchStoicQuote = () => {
+    fetch('https://stoic.tekloon.net/stoic-quote')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        document.getElementById('stoic-quote').textContent = data.quote;
+        document.getElementById('stoic-author').textContent = data.author;
+      })
+      .catch(error => {
+        console.error('There was a problem fetching the stoic quote:', error);
+      });
+  };
+
+</script>
+
+</body>
+</html>
